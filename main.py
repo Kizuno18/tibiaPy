@@ -1,113 +1,35 @@
-import socket
-from tibiapacket import TibiaPacketReader, TibiaPacketWriter
-from protocolcodes import ProtocolCodes
+from bot import TibiaBot
+from opcodeInterpreter import OpCodeInterpreter
+from opcodes import ProtocolCodes
 
-WORLD_NAME = "King-BAIAK"
-ACCOUNT_NAME = "1"
-ACCOUNT_PASS = "1"
+# Esse é o arquivo principal do seu bot. Ele é responsável por instanciar a classe TibiaBot e chamar os métodos necessários para que o bot funcione.
+# Você pode adicionar mais código aqui para fazer o seu bot fazer mais coisas, como por exemplo, enviar pacotes de movimento para o servidor
+# ou enviar pacotes de ataque para o servidor.
 
-HOST = "beta.king-baiak.net"
-PORT = 7172
-VERSION = 860
+HOST = "beta.king-baiak.net"  # Coloque o endereço do servidor aqui
+PORT = 7172  # Coloque a porta do servidor aqui
+VERSION = 860  # Coloque a versão do cliente aqui
+ACCOUNT_NAME = "1"  # Coloque o nome da sua conta aqui
+ACCOUNT_PASS = "1"  # Coloque a senha da sua conta aqui
+CHARACTER_NAME = "Account Manager" # Coloque o nome do seu personagem aqui
 
-
-class OpcodeInterpreter:
-    def __init__(self, protocol_codes):
-        self.protocol_codes = protocol_codes
-        self.character_list_received = False
-
-    def interpret(self, opcode, reader):
-        if opcode == self.protocol_codes.S_LOGIN_ERROR:
-            return self.handle_login_error(reader)
-        elif opcode == self.protocol_codes.S_LOGIN_SUCCESS:
-            return self.handle_login_success(reader)
-        elif opcode == self.protocol_codes.S_CHARACTER_LIST:
-            if not self.character_list_received:
-                self.character_list_received = True
-                return self.handle_character_list(reader)
-        # ... (adicione mais handlers conforme necessário)
-        else:
-            print(f"Opcode não reconhecido: {opcode}")
-
-    def handle_login_error(self, reader):
-        error_message = reader.read_string()
-        print("Erro de login:", error_message)
-
-    def handle_login_success(self, reader):
-        print("Login efetuado com sucesso!")
-
-    def handle_character_list(self, reader):
-        character_list = []
-        characters_count = reader.read_byte()
-        for _ in range(characters_count):
-            character_name = reader.read_string()
-            world_name = reader.read_string()
-            world_ip = reader.read_ipv4()
-            world_port = reader.read_ushort()
-            character_list.append((character_name, world_name, world_ip, world_port))
-        
-        worlds_count = reader.read_byte()
-        for _ in range(worlds_count):
-            world_name = reader.read_string()
-            world_ip = reader.read_ipv4()
-            world_port = reader.read_ushort()
-
-        premium_days = reader.read_ushort()
-
-        print("Lista de personagens:")
-        for character_name, world_name, world_ip, world_port in character_list:
-            print(f"{character_name} ({world_name}) - {world_ip}:{world_port}")
-        
-        return character_list
-
-
-# Conexão com o servidor
-def connect_to_server(ip, port):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((ip, port))
-    return sock
-
-# Enviar pacote de login
-def send_login_packet(sock, version, account_name, account_pass):
-    writer = TibiaPacketWriter()
-
-    # Account Manager login opcode
-    writer.write_byte(ProtocolCodes.C_LOGIN_ACCOUNT_MANAGER)
-
-    # Client version
-    writer.write_ushort(version)
-
-    # Operating System (1 = Windows, 2 = Linux, 3 = macOS)
-    writer.write_byte(1)
-
-    # Account data
-    writer.write_string(account_name)
-    writer.write_string(account_pass)
-
-    # Send packet
-    sock.sendall(writer.get_data())
-
-# Receber pacote de login
-def receive_login_packet(sock, opcode_interpreter):
-    data = sock.recv(1024)
-    reader = TibiaPacketReader(data)
-
-    # Opcode do pacote
-    opcode = reader.read_byte()
-
-    # Interpretar o opcode
-    return opcode_interpreter.interpret(opcode, reader)
-
-
-# Função principal
+# Essa é a função principal do seu programa. Ela é responsável por instanciar a classe TibiaBot e chamar os métodos necessários para que o bot funcione.
 def main():
-    # Conectar ao servidor
-    sock = connect_to_server(HOST, PORT)
+    bot = TibiaBot(HOST, PORT, VERSION, ACCOUNT_NAME, ACCOUNT_PASS)
+    bot.connect_to_server()
+    bot.send_login_packet()
 
-    # Instanciar o OpcodeInterpreter
-    opcode_interpreter = OpcodeInterpreter(ProtocolCodes)
+    opcode_interpreter = OpCodeInterpreter(ProtocolCodes)
 
-    # Enviar pacote de login
-    send_login_packet(sock, VERSION, ACCOUNT_NAME, ACCOUNT_PASS)
+    while True:
+        opcode, reader = bot.receive_packet()
+        response_opcode = opcode_interpreter.interpret(opcode, reader)
 
-    #
+        if response_opcode == ProtocolCodes.C_PING:
+            bot.send_ping_response()
+
+
+# Esse é o ponto de entrada do seu programa. Ele chama a função main() que é responsável por instanciar a classe TibiaBot e chamar os métodos necessários para que o bot funcione.
+
+if __name__ == "__main__":
+    main()

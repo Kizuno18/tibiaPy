@@ -1,12 +1,16 @@
+# Description: Contains all opcodes for the client and server
+
+
 class ProtocolCodes:
     C_LOGIN = 0x01
     C_LOGOUT = 0x0E
     C_PING = 0x1E
     C_PINGBACK = 0x1F
 
-    S_CHARACTER_LIST = 0x64
+
     S_LOGIN_ERROR = 0x0A
     S_LOGIN_SUCCESS = 0x14
+    S_CHARACTER_LIST = 0x64
     S_PING = 0x1D
     S_PINGBACK = 0x1E
 
