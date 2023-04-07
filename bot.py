@@ -26,7 +26,7 @@ class TibiaBot:
 
     def enter_game(self, character_name):
         writer = ProtocolGameSend()
-        writer.write_byte(ProtocolCodes.C_ENTER_GAME)
+        writer.write_byte(ProtocolCodes.S_ENTERGAME)
         writer.write_string(character_name)
         self.sock.sendall(writer.data)
 
@@ -65,6 +65,13 @@ class TibiaBot:
     def send_ping_response(self):
         writer = ProtocolGameSend()
         writer.write_byte(ProtocolCodes.C_PING)
+        self.sock.sendall(writer.data)
+
+
+    def select_character(self, character_name):
+        writer = ProtocolGameSend()
+        writer.write_byte(ProtocolCodes.C_ENTER_GAME)
+        writer.write_string(character_name)
         self.sock.sendall(writer.data)
 
 

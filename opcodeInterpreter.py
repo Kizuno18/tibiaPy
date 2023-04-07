@@ -21,8 +21,11 @@ class OpCodeInterpreter:
                 if not self.character_list_received:
                     self.character_list_received = True
                     return self.handle_character_list(reader)
-            elif opcode == 12:
+            elif opcode == 10:
                 return self.handle_login(reader)
+        
+            elif opcode == 12:
+                return self.handle_ping(reader)
 
             else:
                 print(f"Opcode não reconhecido: {opcode}")

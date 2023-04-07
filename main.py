@@ -18,7 +18,7 @@ def main():
     bot = TibiaBot(HOST, PORT, VERSION, ACCOUNT_NAME, ACCOUNT_PASS)
     bot.connect_to_server()
     bot.send_login_packet()
-
+    bot.enter_game(CHARACTER_NAME)
     opcode_interpreter = OpCodeInterpreter(ProtocolCodes)
 
     while True:
